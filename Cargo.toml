@@ -1,0 +1,18 @@
+[package]
+name = "up-py"
+version = "0.1.0"
+edition = "2024"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "up_py"
+crate-type = ["cdylib"]
+
+[dependencies]
+async-trait = "0.1.89"
+protobuf = "3.7.2"
+pyo3 = { version = "0.20.2", features = ["abi3-py312", "abi3-py38", "extension-module"] }
+pyo3-asyncio = { version = "0.20.0", features = ["tokio-runtime"] }
+tokio = { version = "1.49.0", features = ["full"] }
+up-rust = { version = "0.9.0", features = ["communication", "usubscription", "cloudevents", "mockall", "symphony", "test-util", "tokio", "udiscovery", "util", "utwin"] }
+
