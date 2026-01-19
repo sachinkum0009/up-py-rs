@@ -1,6 +1,7 @@
 use up_rust::UPayloadFormat;
 use up_rust::communication::{
     CallOptions, Publisher, SimplePublisher as RustSimplePublisher, UPayload as RustUPayload,
+    SimpleNotifier as RustSimpleNotifier
 };
 use up_rust::{
     LocalUriProvider, StaticUriProvider as RustStaticUriProvider, UListener,
@@ -139,4 +140,35 @@ impl SimplePublisher {
                 .map_err(|e| PyException::new_err(format!("Failed to publish: {}", e)))
         })
     }
+}
+
+/// A Notifier that uses the uProtocol Transport Layer API to send and receive notifications to/from (other) uEntities.
+#[pyclass]
+pub struct SimpleNotifier {
+    inner: RustSimpleNotifier,
+}
+
+#[pymethods]
+impl SimpleNotifier {
+    #[new]
+    fn new(transport: &LocalTransport, uri_provider: &StaticUriProvider) -> PyResult<Self> {
+        Ok(
+            SimpleNotifier { inner: RustSimpleNotifier::new(transport.inner.clone(), uri_provider.inner.clone()) }
+        )
+    }
+
+    /// Start listening to the topics
+    fn start_listening(
+        &mut self,
+        _py: Python,
+        topic: String,
+    ) {}
+
+    /// Stop listening to the topics
+    fn stop_listening(
+        &mut self,
+        _py: Python,
+        topic: String
+    ) {}
+
 }

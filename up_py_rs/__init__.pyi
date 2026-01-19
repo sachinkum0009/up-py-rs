@@ -1,5 +1,11 @@
 from typing import Optional
 
+class UUri:
+    """
+    UUri Class
+    """
+    ...
+
 class StaticUriProvider:
     """
     Provides URI information for uProtocol entities.
@@ -23,6 +29,9 @@ class StaticUriProvider:
             >>> from up_py_rs import StaticUriProvider
             >>> provider = StaticUriProvider("my-vehicle", 0xa34b, 0x01)
         """
+        ...
+    
+    def get_resource_uri(self, resource_id: int) -> UUri:
         ...
 
 class UMessage:

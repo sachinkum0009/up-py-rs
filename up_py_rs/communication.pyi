@@ -96,3 +96,22 @@ class SimplePublisher:
             >>> publisher.publish(0xb4c1, None)
         """
         ...
+
+class SimpleNotifier:
+    """
+    Simple Notifier
+    """
+    def __init__(self, transport: LocalTransport, uri_provider: StaticUriProvider) -> None:
+        ...
+
+    def start_listening(self, topic: str) -> None:
+        """
+        start listening to the topic
+        """
+        ...
+    
+    def stop_listening(self, topic: str) -> None:
+        """
+        stop listening to the topic
+        """
+        ...

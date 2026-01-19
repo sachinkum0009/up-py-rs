@@ -2,6 +2,7 @@ use up_rust::UPayloadFormat;
 use up_rust::communication::{
     CallOptions, Publisher, SimplePublisher as RustSimplePublisher, UPayload as RustUPayload,
 };
+use up_rust::UUri as RustUUri;
 use up_rust::{
     LocalUriProvider, StaticUriProvider as RustStaticUriProvider, UListener,
     UMessage as RustUMessage, UTransport, local_transport::LocalTransport as RustLocalTransport,
@@ -59,6 +60,12 @@ impl UMessage {
     }
 }
 
+/// UUri class
+#[pyclass]
+pub struct UUri {
+    inner: RustUUri,
+}
+
 /// Provides URI information for uProtocol entities.
 ///
 /// StaticUriProvider creates and manages URIs for identifying entities
@@ -90,7 +97,14 @@ impl StaticUriProvider {
             inner: Arc::new(RustStaticUriProvider::new(&authority, entity_id, version)),
         }
     }
+
+    fn get_resource_uri(&self, _py: Python, resource_id: u16) -> UUri {
+        let uuri = self.inner.get_resource_uri(resource_id);
+        UUri { inner: uuri }
+    }
 }
+
+
 
 /// Provides local (in-process) transport for uProtocol communication.
 ///
