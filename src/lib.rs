@@ -1,5 +1,8 @@
 pub mod communication;
 pub mod local_transport;
+pub mod ustatus;
+pub mod utransport;
+
 
 use pyo3::exceptions::PyException;
 use pyo3::prelude::*;
@@ -7,7 +10,7 @@ use std::sync::Arc;
 
 use protobuf::well_known_types::wrappers::StringValue;
 
-use communication::{SimplePublisher, UPayload};
+use communication::{SimplePublisher, SimpleNotifier, UPayload};
 use local_transport::{LocalTransport, StaticUriProvider, UMessage};
 
 #[pymodule]
@@ -17,8 +20,9 @@ fn up_py_rs(py: Python, m: &PyModule) -> PyResult<()> {
 
     // communication submodule
     let communication_mod = PyModule::new(py, "communication")?;
-    communication_mod.add_class::<UPayload>()?;
     communication_mod.add_class::<SimplePublisher>()?;
+    communication_mod.add_class::<SimpleNotifier>()?;
+    communication_mod.add_class::<UPayload>()?;
     m.add_submodule(communication_mod)?;
 
     // local transport submodule

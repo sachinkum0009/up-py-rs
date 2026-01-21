@@ -1,5 +1,5 @@
-from typing import Optional
-from . import StaticUriProvider
+from typing import Optional, Callable
+from . import StaticUriProvider, UUri, UMessage
 from .local_transport import LocalTransport
 
 
@@ -94,5 +94,92 @@ class SimplePublisher:
             >>> publisher.publish(0xb4c1, payload)
             >>> # Or publish without payload:
             >>> publisher.publish(0xb4c1, None)
+        """
+        ...
+
+class SimpleNotifier:
+    """
+    A Notifier that uses the uProtocol Transport Layer API to send and receive notifications to/from (other) uEntities.
+    
+    SimpleNotifier provides an easy-to-use interface for sending notifications
+    and listening for notifications from other entities in the uProtocol network.
+    """
+    def __init__(self, transport: LocalTransport, uri_provider: StaticUriProvider) -> None:
+        """
+        Create a new SimpleNotifier.
+        
+        Args:
+            transport: The transport to use for sending and receiving notifications.
+            uri_provider: The URI provider for the notifying entity.
+        
+        Raises:
+            Exception: If the runtime creation fails.
+        
+        Example:
+            >>> from up_py_rs.communication import SimpleNotifier
+            >>> from up_py_rs.local_transport import LocalTransport
+            >>> from up_py_rs import StaticUriProvider
+            >>> transport = LocalTransport()
+            >>> provider = StaticUriProvider("my-vehicle", 0xa34b, 0x01)
+            >>> notifier = SimpleNotifier(transport, provider)
+        """
+        ...
+
+    def start_listening(self, topic: UUri, callback: Callable[[UMessage], None]) -> None:
+        """
+        Start listening for notifications on a specific topic.
+        
+        Args:
+            topic: The topic URI to listen to.
+            callback: A Python function that accepts a UMessage parameter.
+                     Will be called when notifications arrive.
+        
+        Raises:
+            Exception: If listener registration fails.
+        
+        Example:
+            >>> from up_py_rs import UMessage
+            >>> def notification_handler(msg: UMessage):
+            ...     text = msg.extract_string()
+            ...     if text:
+            ...         print(f"Notification: {text}")
+            >>> topic = uri_provider.get_resource_uri(0xd100)
+            >>> notifier.start_listening(topic, notification_handler)
+        """
+        ...
+    
+    def stop_listening(self, topic: UUri, callback: Callable[[UMessage], None]) -> None:
+        """
+        Stop listening for notifications on a specific topic.
+        
+        Args:
+            topic: The topic URI to stop listening to.
+            callback: The same Python function that was registered.
+        
+        Raises:
+            Exception: If listener unregistration fails.
+        
+        Example:
+            >>> notifier.stop_listening(topic, notification_handler)
+        """
+        ...
+    
+    def notify(self, resource_id: int, destination: UUri, payload: Optional[UPayload]) -> None:
+        """
+        Send a notification to a specific destination.
+        
+        Args:
+            resource_id: The notification resource ID (0 to 65535).
+            destination: The destination URI to send the notification to.
+            payload: The notification payload, or None for empty notifications.
+        
+        Raises:
+            Exception: If notification sending fails.
+        
+        Example:
+            >>> from up_py_rs.communication import UPayload
+            >>> payload = UPayload.from_string("Alert!")
+            >>> destination = uri_provider.get_source_uri()
+            >>> notifier.notify(0xd100, destination, payload)
         """
         ...

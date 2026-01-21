@@ -2,6 +2,7 @@ use up_rust::UPayloadFormat;
 use up_rust::communication::{
     CallOptions, Publisher, SimplePublisher as RustSimplePublisher, UPayload as RustUPayload,
 };
+use up_rust::UUri as RustUUri;
 use up_rust::{
     LocalUriProvider, StaticUriProvider as RustStaticUriProvider, UListener,
     UMessage as RustUMessage, UTransport, local_transport::LocalTransport as RustLocalTransport,
@@ -36,7 +37,7 @@ impl UListener for PythonListener {
 #[pyclass]
 #[derive(Clone)]
 pub struct UMessage {
-    inner: RustUMessage,
+    pub inner: RustUMessage,
 }
 
 #[pymethods]
@@ -57,6 +58,13 @@ impl UMessage {
             Err(_) => Ok(None),
         }
     }
+}
+
+/// UUri class
+#[pyclass]
+#[derive(Clone)]
+pub struct UUri {
+    pub inner: RustUUri,
 }
 
 /// Provides URI information for uProtocol entities.
@@ -90,7 +98,27 @@ impl StaticUriProvider {
             inner: Arc::new(RustStaticUriProvider::new(&authority, entity_id, version)),
         }
     }
+
+    fn get_resource_uri(&self, _py: Python, resource_id: u16) -> UUri {
+        let uuri = self.inner.get_resource_uri(resource_id);
+        UUri { inner: uuri }
+    }
+
+    /// Get the source URI for this entity.
+    ///
+    /// Returns:
+    ///     UUri: The source URI identifying this entity.
+    ///
+    /// Example:
+    ///     >>> provider = up_py_rs.StaticUriProvider("my-vehicle", 0xa34b, 0x01)
+    ///     >>> source_uri = provider.get_source_uri()
+    fn get_source_uri(&self, _py: Python) -> UUri {
+        let uuri = self.inner.get_source_uri();
+        UUri { inner: uuri }
+    }
 }
+
+
 
 /// Provides local (in-process) transport for uProtocol communication.
 ///
