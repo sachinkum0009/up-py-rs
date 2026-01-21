@@ -30,9 +30,7 @@ classifiers = [
     "Topic :: System :: Networking",
 ]
 dynamic = ["version"]
-dependencies = [
-    "maturin>=1.11.5",
-]
+dependencies = []
 
 [project.urls]
 Homepage = "https://github.com/sachinkum0009/up-py-rs"
@@ -43,5 +41,6 @@ Changelog = "https://github.com/sachinkum0009/up-py-rs/releases"
 
 [dependency-groups]
 dev = [
+    "maturin>=1.11.5",
     "pytest>=8.3.5",
 ]
