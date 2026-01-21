@@ -1,6 +1,6 @@
 [package]
 name = "up-py-rs"
-version = "0.0.6"
+version = "0.0.7"
 edition = "2024"
 description = "It provides UProtocol binding to use in Python. It is built using Maturin and Pyo3"
 license = "MIT"
