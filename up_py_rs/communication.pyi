@@ -1,6 +1,7 @@
 from typing import Optional, Callable
 from . import StaticUriProvider, UUri, UMessage
 from .local_transport import LocalTransport
+from .zenoh_transport import UPTransportZenoh
 
 
 class UPayload:
@@ -56,7 +57,7 @@ class SimplePublisher:
     to specific resources in the uProtocol network.
     """
     
-    def __init__(self, transport: 'LocalTransport', uri_provider: StaticUriProvider) -> None:
+    def __init__(self, transport: 'LocalTransport' | 'UPTransportZenoh', uri_provider: StaticUriProvider) -> None:
         """
         Create a new SimplePublisher.
         

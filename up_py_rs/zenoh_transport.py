@@ -20,7 +20,9 @@ try:
     UPTransportZenohBuilder = _zenoh_transport.UPTransportZenohBuilder
 
     __all__ = ["UPTransportZenoh", "UPTransportZenohBuilder"]
-except ImportError as e:
+except (ImportError, AttributeError) as e:
     raise ImportError(
-        "Zenoh transport not available. Install with: pip install up-py-rs[zenoh]"
+        "Zenoh transport not available. "
+        "The package was not built with zenoh support. "
+        "Please install a version built with zenoh features enabled."
     ) from e
