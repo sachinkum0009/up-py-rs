@@ -37,7 +37,7 @@ impl UListener for PythonListener {
 #[pyclass]
 #[derive(Clone)]
 pub struct UMessage {
-    inner: RustUMessage,
+    pub inner: RustUMessage,
 }
 
 #[pymethods]
@@ -62,8 +62,9 @@ impl UMessage {
 
 /// UUri class
 #[pyclass]
+#[derive(Clone)]
 pub struct UUri {
-    inner: RustUUri,
+    pub inner: RustUUri,
 }
 
 /// Provides URI information for uProtocol entities.
@@ -100,6 +101,19 @@ impl StaticUriProvider {
 
     fn get_resource_uri(&self, _py: Python, resource_id: u16) -> UUri {
         let uuri = self.inner.get_resource_uri(resource_id);
+        UUri { inner: uuri }
+    }
+
+    /// Get the source URI for this entity.
+    ///
+    /// Returns:
+    ///     UUri: The source URI identifying this entity.
+    ///
+    /// Example:
+    ///     >>> provider = up_py_rs.StaticUriProvider("my-vehicle", 0xa34b, 0x01)
+    ///     >>> source_uri = provider.get_source_uri()
+    fn get_source_uri(&self, _py: Python) -> UUri {
+        let uuri = self.inner.get_source_uri();
         UUri { inner: uuri }
     }
 }

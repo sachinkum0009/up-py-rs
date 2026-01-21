@@ -32,6 +32,30 @@ class StaticUriProvider:
         ...
     
     def get_resource_uri(self, resource_id: int) -> UUri:
+        """
+        Get a resource URI for a specific resource ID.
+        
+        Args:
+            resource_id: The resource ID (0 to 65535).
+        
+        Returns:
+            The resource URI.
+        
+        Example:
+            >>> topic = provider.get_resource_uri(0xd100)
+        """
+        ...
+    
+    def get_source_uri(self) -> UUri:
+        """
+        Get the source URI for this entity.
+        
+        Returns:
+            The source URI identifying this entity.
+        
+        Example:
+            >>> source = provider.get_source_uri()
+        """
         ...
 
 class UMessage:
