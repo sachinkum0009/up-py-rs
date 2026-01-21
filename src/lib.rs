@@ -3,6 +3,9 @@ pub mod local_transport;
 pub mod ustatus;
 pub mod utransport;
 
+#[cfg(feature = "zenoh")]
+pub mod zenoh_transport;
+
 
 use pyo3::exceptions::PyException;
 use pyo3::prelude::*;
@@ -33,6 +36,15 @@ fn up_py_rs(py: Python, m: &PyModule) -> PyResult<()> {
     // Add top-level classes
     m.add_class::<UMessage>()?;
     m.add_class::<StaticUriProvider>()?;
+
+    // Conditionally add zenoh transport submodule
+    #[cfg(feature = "zenoh")]
+    {
+        let zenoh_mod = PyModule::new(py, "zenoh_transport")?;
+        zenoh_mod.add_class::<zenoh_transport::UPTransportZenoh>()?;
+        zenoh_mod.add_class::<zenoh_transport::UPTransportZenohBuilder>()?;
+        m.add_submodule(zenoh_mod)?;
+    }
 
     Ok(())
 }

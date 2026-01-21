@@ -11,10 +11,37 @@ use up_rust::{
 use protobuf::well_known_types::wrappers::StringValue;
 use pyo3::exceptions::PyException;
 use pyo3::prelude::*;
+use pyo3::types::PyAny;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use crate::local_transport::{LocalTransport, StaticUriProvider, UUri};
+
+#[cfg(feature = "zenoh")]
+use crate::zenoh_transport::UPTransportZenoh;
+
+/// Enum to hold different transport types
+enum TransportType {
+    Local(Arc<RustLocalTransport>),
+    #[cfg(feature = "zenoh")]
+    Zenoh(Arc<up_transport_zenoh::UPTransportZenoh>),
+}
+
+impl TransportType {
+    fn as_transport(&self) -> &dyn UTransport {
+        match self {
+            TransportType::Local(t) => t.as_ref(),
+            #[cfg(feature = "zenoh")]
+            TransportType::Zenoh(t) => t.as_ref(),
+        }
+    }    
+    fn as_transport_arc(&self) -> Arc<dyn UTransport> {
+        match self {
+            TransportType::Local(t) => t.clone() as Arc<dyn UTransport>,
+            #[cfg(feature = "zenoh")]
+            TransportType::Zenoh(t) => t.clone() as Arc<dyn UTransport>,
+        }
+    }}
 
 /// Represents a message payload in uProtocol.
 ///
@@ -77,19 +104,21 @@ impl UPayload {
 /// Publisher for sending uProtocol messages.
 ///
 /// SimplePublisher provides an easy-to-use interface for publishing messages
-/// to specific resources in the uProtocol network.
+/// to specific resources in the uProtocol network. It works with any transport
+/// implementation (LocalTransport, UPTransportZenoh, etc.).
 #[pyclass]
 pub struct SimplePublisher {
-    inner: RustSimplePublisher,
+    transport: TransportType,
+    uri_provider: Arc<RustStaticUriProvider>,
     runtime: tokio::runtime::Runtime,
 }
 
 #[pymethods]
 impl SimplePublisher {
-    /// Create a new SimplePublisher.
+    /// Create a new SimplePublisher with LocalTransport.
     ///
     /// Args:
-    ///     transport (LocalTransport): The transport to use for sending messages.
+    ///     transport (LocalTransport): The local transport to use for sending messages.
     ///     uri_provider (StaticUriProvider): The URI provider for the publishing entity.
     ///
     /// Returns:
@@ -103,11 +132,26 @@ impl SimplePublisher {
     ///     >>> provider = up_py_rs.StaticUriProvider("device", 0x1234, 0x01)
     ///     >>> publisher = up_py_rs.SimplePublisher(transport, provider)
     #[new]
-    fn new(transport: &LocalTransport, uri_provider: &StaticUriProvider) -> PyResult<Self> {
+    fn new(transport: &PyAny, uri_provider: &StaticUriProvider) -> PyResult<Self> {
         let runtime = tokio::runtime::Runtime::new()
             .map_err(|e| PyException::new_err(format!("Failed to create runtime: {}", e)))?;
+        
+        let transport_type = if let Ok(local_transport) = transport.extract::<PyRef<LocalTransport>>() {
+            TransportType::Local(local_transport.inner.clone())
+        } else {
+            #[cfg(feature = "zenoh")]
+            if let Ok(zenoh_transport) = transport.extract::<PyRef<UPTransportZenoh>>() {
+                TransportType::Zenoh(zenoh_transport.transport.clone())
+            } else {
+                return Err(PyException::new_err("Transport must be LocalTransport or UPTransportZenoh"));
+            }
+            #[cfg(not(feature = "zenoh"))]
+            return Err(PyException::new_err("Transport must be LocalTransport"));
+        };
+        
         Ok(SimplePublisher {
-            inner: RustSimplePublisher::new(transport.inner.clone(), uri_provider.inner.clone()),
+            transport: transport_type,
+            uri_provider: uri_provider.inner.clone(),
             runtime,
         })
     }
@@ -134,9 +178,12 @@ impl SimplePublisher {
     ) -> PyResult<()> {
         let payload_inner = payload.map(|p| p.inner);
         let call_options = CallOptions::for_publish(None, None, None);
+        let transport_arc = self.transport.as_transport_arc();
+        let uri_provider = self.uri_provider.clone();
 
-        self.runtime.block_on(async {
-            self.inner
+        self.runtime.block_on(async move {
+            let publisher = RustSimplePublisher::new(transport_arc, uri_provider);
+            publisher
                 .publish(resource_id, call_options, payload_inner)
                 .await
                 .map_err(|e| PyException::new_err(format!("Failed to publish: {}", e)))

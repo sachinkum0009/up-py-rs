@@ -275,6 +275,14 @@ dev = [
 ]
 
 [package.metadata]
+requires-dist = [
+    { name = "up-py-rs", extras = ["cloudevents"], marker = "extra == 'all'" },
+    { name = "up-py-rs", extras = ["discovery"], marker = "extra == 'all'" },
+    { name = "up-py-rs", extras = ["subscription"], marker = "extra == 'all'" },
+    { name = "up-py-rs", extras = ["twin"], marker = "extra == 'all'" },
+    { name = "up-py-rs", extras = ["zenoh"], marker = "extra == 'all'" },
+]
+provides-extras = ["all", "cloudevents", "discovery", "mqtt", "someip", "subscription", "test", "twin", "zenoh"]
 
 [package.metadata.requires-dev]
 dev = [
