@@ -23,36 +23,57 @@ Install from PyPI:
 # Basic installation (includes LocalTransport and core features)
 pip install up-py-rs
 
-# With Zenoh network transport
-pip install up-py-rs[zenoh]
-
-# With all optional features
-pip install up-py-rs[all]
+# Build from source with specific transports:
+pip install up-py-rs[zenoh]  # Note: Requires build tools (see below)
+pip install up-py-rs[all]    # All features
 ```
+
+**Important**: The PyPI wheel includes only the base features. For transport protocols like Zenoh, you need to either:
+
+1. **Build from source** (recommended for transport features):
+   ```bash
+   pip install maturin
+   pip install up-py-rs --no-binary up-py-rs --config-settings="--features=zenoh"
+   ```
+
+2. **Install the pre-built complete wheel** (if available for your platform):
+   ```bash
+   pip install up-py-rs-complete  # Includes all transports
+   ```
+
+3. **Use a Docker image** with pre-built binaries (coming soon)
 
 Or using uv:
 
 ```bash
 uv add up-py-rs
-# or with extras
-uv add up-py-rs --extra zenoh
+# Build with features
+uv pip install up-py-rs --no-binary up-py-rs
 ```
 
 ### Optional Dependencies
 
-up-py-rs supports modular installation through extras:
+up-py-rs supports modular installation through build-time features:
 
-| Extra | Description | Install Command |
-|-------|-------------|-----------------|
-| `zenoh` | Zenoh network transport | `pip install up-py-rs[zenoh]` |
-| `discovery` | Service discovery support | `pip install up-py-rs[discovery]` |
-| `subscription` | Advanced subscription management | `pip install up-py-rs[subscription]` |
-| `twin` | Digital twin support | `pip install up-py-rs[twin]` |
-| `cloudevents` | CloudEvents format support | `pip install up-py-rs[cloudevents]` |
-| `all` | All optional features | `pip install up-py-rs[all]` |
-| `test` | Testing utilities | `pip install up-py-rs[test]` |
+| Feature | Description | Build Command |
+|---------|-------------|---------------|
+| `zenoh` | Zenoh network transport | `pip install --no-binary up-py-rs --config-settings="--features=zenoh"` |
+| `mqtt` | MQTT transport (coming soon) | TBD |
+| `all-transports` | All transport protocols | `--features=all-transports` |
+| `discovery` | Service discovery | Included in base |
+| `subscription` | Subscription management | Included in base |
+| `twin` | Digital twin support | Included in base |
+| `cloudevents` | CloudEvents format | Included in base |
+| `all` | Everything | `--features=all` |
 
-**Note**: Currently all Rust features are included in the wheel. Extras are provided for documentation and future Python runtime dependencies.
+**Development Installation** (includes all features):
+
+```bash
+git clone https://github.com/sachinkum0009/up-py-rs.git
+cd up-py-rs
+pip install maturin
+maturin develop --features all-transports
+```
 
 ## Quick Start
 
