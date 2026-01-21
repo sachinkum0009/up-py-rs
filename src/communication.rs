@@ -11,7 +11,8 @@ use up_rust::{
 use protobuf::well_known_types::wrappers::StringValue;
 use pyo3::exceptions::PyException;
 use pyo3::prelude::*;
-use std::sync::Arc;
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 
 use crate::local_transport::{LocalTransport, StaticUriProvider, UUri};
 
@@ -169,6 +170,9 @@ impl UListener for PythonNotificationListener {
 pub struct SimpleNotifier {
     inner: RustSimpleNotifier,
     runtime: tokio::runtime::Runtime,
+    // Store listeners to enable proper unregistration
+    // Key is a string representation of the topic URI
+    listeners: Arc<Mutex<HashMap<String, Arc<PythonNotificationListener>>>>,
 }
 
 #[pymethods]
@@ -196,6 +200,7 @@ impl SimpleNotifier {
         Ok(SimpleNotifier {
             inner: RustSimpleNotifier::new(transport.inner.clone(), uri_provider.inner.clone()),
             runtime,
+            listeners: Arc::new(Mutex::new(HashMap::new())),
         })
     }
 
@@ -222,9 +227,20 @@ impl SimpleNotifier {
         topic: &UUri,
         callback: PyObject,
     ) -> PyResult<()> {
+        // Create a key for storing the listener
+        let topic_key = format!("{:?}", topic.inner);
+        
+        // Create the listener wrapper
         let listener = Arc::new(PythonNotificationListener {
             callback: callback.clone(),
         });
+        
+        // Store the listener for later retrieval
+        {
+            let mut listeners = self.listeners.lock()
+                .map_err(|e| PyException::new_err(format!("Failed to acquire listener lock: {}", e)))?;
+            listeners.insert(topic_key, listener.clone());
+        }
 
         self.runtime.block_on(async {
             self.inner
@@ -253,9 +269,18 @@ impl SimpleNotifier {
         topic: &UUri,
         callback: PyObject,
     ) -> PyResult<()> {
-        let listener = Arc::new(PythonNotificationListener {
-            callback: callback.clone(),
-        });
+        // Create the same key used during registration
+        let topic_key = format!("{:?}", topic.inner);
+        
+        // Retrieve the stored listener
+        let listener = {
+            let mut listeners = self.listeners.lock()
+                .map_err(|e| PyException::new_err(format!("Failed to acquire listener lock: {}", e)))?;
+            listeners.remove(&topic_key)
+                .ok_or_else(|| PyException::new_err(
+                    format!("No listener registered for topic: {}", topic_key)
+                ))?
+        };
 
         self.runtime.block_on(async {
             self.inner
