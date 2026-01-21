@@ -265,19 +265,27 @@ wheels = [
 [[package]]
 name = "up-py-rs"
 source = { editable = "." }
-dependencies = [
-    { name = "maturin" },
-]
 
 [package.dev-dependencies]
 dev = [
+    { name = "maturin" },
     { name = "pytest", version = "8.3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
     { name = "pytest", version = "8.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.9.*'" },
     { name = "pytest", version = "9.0.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "maturin", specifier = ">=1.11.5" }]
+requires-dist = [
+    { name = "up-py-rs", extras = ["cloudevents"], marker = "extra == 'all'" },
+    { name = "up-py-rs", extras = ["discovery"], marker = "extra == 'all'" },
+    { name = "up-py-rs", extras = ["subscription"], marker = "extra == 'all'" },
+    { name = "up-py-rs", extras = ["twin"], marker = "extra == 'all'" },
+    { name = "up-py-rs", extras = ["zenoh"], marker = "extra == 'all'" },
+]
+provides-extras = ["all", "cloudevents", "discovery", "mqtt", "someip", "subscription", "test", "twin", "zenoh"]
 
 [package.metadata.requires-dev]
-dev = [{ name = "pytest", specifier = ">=8.3.5" }]
+dev = [
+    { name = "maturin", specifier = ">=1.11.5" },
+    { name = "pytest", specifier = ">=8.3.5" },
+]
