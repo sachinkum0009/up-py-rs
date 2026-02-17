@@ -20,18 +20,66 @@ Python bindings for the [Eclipse uProtocol](https://github.com/eclipse-uprotocol
 Install from PyPI:
 
 ```bash
+# Basic installation (includes LocalTransport and core features)
 pip install up-py-rs
+
+# Build from source with specific transports:
+pip install up-py-rs[zenoh]  # Note: Requires build tools (see below)
+pip install up-py-rs[all]    # All features
 ```
+
+**Important**: The PyPI wheel includes only the base features. For transport protocols like Zenoh, you need to either:
+
+1. **Build from source** (recommended for transport features):
+   ```bash
+   pip install maturin
+   pip install up-py-rs --no-binary up-py-rs --config-settings="--features=zenoh"
+   ```
+
+2. **Install the pre-built complete wheel** (if available for your platform):
+   ```bash
+   pip install up-py-rs-complete  # Includes all transports
+   ```
+
+3. **Use a Docker image** with pre-built binaries (coming soon)
 
 Or using uv:
 
 ```bash
 uv add up-py-rs
+# Build with features
+uv pip install up-py-rs --no-binary up-py-rs
+```
+
+### Optional Dependencies
+
+up-py-rs supports modular installation through build-time features:
+
+| Feature | Description | Build Command |
+|---------|-------------|---------------|
+| `zenoh` | Zenoh network transport | `pip install --no-binary up-py-rs --config-settings="--features=zenoh"` |
+| `mqtt` | MQTT transport (coming soon) | TBD |
+| `all-transports` | All transport protocols | `--features=all-transports` |
+| `discovery` | Service discovery | Included in base |
+| `subscription` | Subscription management | Included in base |
+| `twin` | Digital twin support | Included in base |
+| `cloudevents` | CloudEvents format | Included in base |
+| `all` | Everything | `--features=all` |
+
+**Development Installation** (includes all features):
+
+```bash
+git clone https://github.com/sachinkum0009/up-py-rs.git
+cd up-py-rs
+pip install maturin
+maturin develop --features all-transports
 ```
 
 ## Quick Start
 
-### Simple Publisher
+### Simple Publisher (Local Transport)
+
+For in-process communication without network overhead:
 
 ```python
 from up_py_rs import StaticUriProvider
@@ -47,6 +95,28 @@ publisher = SimplePublisher(transport, uri_provider)
 payload = UPayload.from_string("Hello from Python!")
 publisher.publish(0xb4c1, payload)
 ```
+
+### Zenoh Publisher (Network Transport)
+
+For distributed communication across network boundaries:
+
+```python
+from up_py_rs import StaticUriProvider
+from up_py_rs.zenoh_transport import UPTransportZenoh
+from up_py_rs.communication import SimplePublisher, UPayload
+
+# Setup Zenoh transport
+uri_provider = StaticUriProvider("publisher", 0x3b1da, 1)
+transport = UPTransportZenoh.builder("publisher").build()
+publisher = SimplePublisher(transport, uri_provider)
+
+# Publish messages
+for i in range(1, 11):
+    payload = UPayload.from_string(f"event {i}")
+    publisher.publish(0x8001, payload)
+```
+
+**Note**: Requires `pip install up-py-rs[zenoh]`
 
 ### Simple Notifier
 
@@ -81,13 +151,16 @@ notifier.stop_listening(topic, notification_handler)
 ## Components
 
 ### LocalTransport
-In-process message transport for testing and local communication without network overhead.
+In-process message transport for testing and local communication without network overhead. Best for single-process applications and testing.
+
+### UPTransportZenoh
+Zenoh-based network transport for distributed communication across network boundaries. Enables pub/sub patterns between different processes, devices, or vehicles. Requires `zenoh` extra.
 
 ### StaticUriProvider
 Creates and manages uProtocol URIs for identifying entities in the network.
 
 ### SimplePublisher
-High-level API for publishing messages to specific resources.
+High-level API for publishing messages to specific resources. Works with any transport (Local or Zenoh).
 
 ### SimpleNotifier
 Send and receive notifications between uEntities with listener callbacks.
@@ -118,6 +191,15 @@ uv run pytest
 # Run examples
 uv run python examples/simple_publish.py
 uv run python examples/simple_notify.py
+
+# Run Zenoh examples (requires zenoh extra)
+uv add up-py-rs --extra zenoh
+
+# Terminal 1: Start subscriber
+uv run python examples/simple_zenoh_subscriber.py
+
+# Terminal 2: Start publisher
+uv run python examples/simple_zenoh_publisher.py
 ```
 
 ### Building Wheels
